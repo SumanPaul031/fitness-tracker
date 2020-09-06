@@ -1,5 +1,5 @@
-<section class="login-form">
-    <form fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="10px" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+<section class="login-form" style="padding-top: 15%;">
+    <form fxLayout="column" fxLayoutWrap fxLayoutAlign="center center" fxLayoutGap="10px" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <mat-form-field>
             <input type="email" name="email" matInput placeholder="Enter Your Email" formControlName="email">
             <mat-error>Invalid or Missing email</mat-error>

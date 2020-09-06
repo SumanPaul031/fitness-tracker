@@ -12,6 +12,7 @@ import { environment } from '../environments/environment.prod';
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { AngularFirestoreModule } from '@angular/fire/firestore';
+import { AngularFireAuthModule } from '@angular/fire/auth';
 import { StoreModule } from '@ngrx/store';
 import { reducers } from './app.reducer';
 
@@ -30,6 +31,7 @@ import { reducers } from './app.reducer';
     AppRoutingModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
     AngularFirestoreModule,
+    AngularFireAuthModule,
     StoreModule.forRoot(reducers)
   ],
   providers: [],

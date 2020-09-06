@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Exercise } from './exercise.model';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { map, take } from 'rxjs/operators';
+import { map, take, filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { UiService } from '../shared/ui.service';
 import * as UI from '../shared/ui.actions';
 import * as Training from './training.actions';
 import * as fromTraining from './training.reducer';
 import { Store } from '@ngrx/store';
+import { AngularFireAuth } from '@angular/fire/auth';
+import { User } from 'firebase';
 
 @Injectable({
   providedIn: 'root'
@@ -15,12 +17,16 @@ import { Store } from '@ngrx/store';
 export class TrainingService {
 
   private fbSubs: Subscription[] = [];
+  currentUser: User;
 
   constructor(
     private db: AngularFirestore, 
     private uiService: UiService,
-    private store: Store<fromTraining.State>
-  ) { }
+    private store: Store<fromTraining.State>,
+    private afAuth: AngularFireAuth
+  ) { 
+    this.afAuth.authState.subscribe(user => this.currentUser = user);
+  }
 
   fetchAvailableExercises(){
     this.store.dispatch(new UI.StartLoading());
@@ -54,7 +60,7 @@ export class TrainingService {
 
   completeExercise(){
     this.store.select(fromTraining.getActiveTraining).pipe(take(1)).subscribe(ex => {
-      this.addDataToDatabase({...ex, date: new Date(), state: 'completed'});
+      this.addDataToDatabase({...ex, date: new Date(), state: 'completed', user_id: this.currentUser.uid});
       this.store.dispatch(new Training.StopTraining());
     })
   }
@@ -66,7 +72,8 @@ export class TrainingService {
         duration: ex.duration * (progress / 100),
         calories: ex.calories * (progress / 100),
         date: new Date(), 
-        state: 'cancelled'
+        state: 'cancelled',
+        user_id: this.currentUser.uid
       });
       this.store.dispatch(new Training.StopTraining());
     })
@@ -74,7 +81,8 @@ export class TrainingService {
 
   fetchCompletedOrCancelledExercises(){
     this.fbSubs.push(this.db.collection('finishedExercises').valueChanges().subscribe((exercises: Exercise[]) => {
-      this.store.dispatch(new Training.SetFinishedTrainings(exercises));
+      // exercises = exercises.filter(ex => ex.user_id == this.currentUser.uid)
+      this.store.dispatch(new Training.SetFinishedTrainings(exercises.filter(ex => ex.user_id == this.currentUser.uid)));
     }));
   }
 
@@ -83,6 +91,8 @@ export class TrainingService {
   }
 
   private addDataToDatabase(exercise: Exercise){
-    this.db.collection('finishedExercises').add(exercise);
+    this.db.collection('finishedExercises').add({
+      ...exercise
+    });
   }
 }
